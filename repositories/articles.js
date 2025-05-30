@@ -113,9 +113,54 @@ ORDER BY
   }
 };
 
+const getAllArticles = async () => {
+
+  try {
+    const query = `SELECT articles.id , articles.title , articles.content , articles.slug , articles.cover , articles.created_at , tags.title AS "Tag_Title" , tags.slug AS "Tag_Slug" , users.name AS "Author_Name" , users.username AS "Author_Username" FROM articles_tags
+    INNER JOIN articles ON articles_tags.article_id = articles.id
+    INNER JOIN tags ON articles_tags.tag_id = tags.id
+    INNER JOIN users ON articles.author_id = users.id
+    GROUP BY articles.id`;
+
+    const [articles] = await db.query(query);
+
+
+    const formattedArticles = []
+
+    for (const article of articles) {
+      const [tags] = await db.query(`
+      SELECT tags.id , tags.title , tags.slug FROM articles_tags
+      INNER JOIN tags ON articles_tags.tag_id = tags.id
+      WHERE articles_tags.article_id = ?` , [article.id])
+
+      formattedArticles.push({
+        id: article.id,
+        title: article.title,
+        content: article.content,
+        slug: article.slug,
+        cover: article.cover,
+        created_at : article.created_at,
+        author: {
+          name: article.Author_Name,
+          username: article.Author_Username
+        },
+        tags: tags.map((tag) => tag.title && tag.slug)
+      })
+
+    }
+
+
+    return formattedArticles;
+  } catch (error) {
+    throw error
+  }
+
+}
+
 module.exports = {
   createArticle,
   removeArticle,
   addTagToArticle,
   searchInArticles,
+  getAllArticles,
 };

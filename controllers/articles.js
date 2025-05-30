@@ -2,6 +2,10 @@ const Article = require("./../repositories/articles");
 const slugify = require("slugify");
 const sharp = require('sharp');
 const path = require('path');
+const calculateTime = require('./../utils/funcs');
+const summarize = require('./../utils/summarize');
+const db = require("../db");
+
 
 exports.createArticle = async (req, res, next) => {
   try {
@@ -77,6 +81,25 @@ exports.createArticle = async (req, res, next) => {
 
 exports.getAllArticles = async (req, res, next) => {
   try {
+
+    const articles = await Article.getAllArticles()
+
+    if(!articles){
+      return res.status(404).json({
+        message: "There is no article :)"
+      })
+    }
+
+    for (const article of articles) {
+      article.created_at = calculateTime(article.created_at)
+    }
+
+    for (const article of articles) {
+      article.summery = await summarize(article.content , 200)
+    }
+
+    return res.status(201).json(articles)
+
   } catch (error) {
     next(error);
   }
