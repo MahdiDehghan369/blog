@@ -12,7 +12,7 @@ exports.register = async (req, res, next) => {
 
     if (userIsExists) {
       return res.status(422).json({
-        message: "Username or email already exists :)",
+        message: "A user with the same username or email already exists.",
       });
     }
 
@@ -25,13 +25,21 @@ exports.register = async (req, res, next) => {
       password: hashedPassword,
     });
 
-    res.status(201).json({
-      message: "کاربر با موفقیت ثبت نام شد"
+
+    return res.status(201).json({
+      message: "User registered successfully.",
+      user: {
+        id: user.id,
+        name: user.name,
+        username: user.username,
+        email: user.email,
+      },
     });
   } catch (error) {
     next(error);
   }
 };
+
 
 exports.login = async (req, res, next) => {
   try {
@@ -41,7 +49,7 @@ exports.login = async (req, res, next) => {
 
     if (!user) {
       return res.status(401).json({
-        message: "Invalid username or password",
+        message: "Invalid username or password.",
       });
     }
 
@@ -49,23 +57,20 @@ exports.login = async (req, res, next) => {
 
     if (!isPasswordValid) {
       return res.status(401).json({
-        message: "Invalid username or password",
+        message: "Invalid username or password.",
       });
     }
+
     const accessToken = jwt.sign(
       { id: user.id, role: user.role },
       configs.auth.accessTokenSecretKey,
-      {
-        expiresIn: configs.auth.accessTokenExpiresInSeonds + "s",
-      }
+      { expiresIn: `${configs.auth.accessTokenExpiresInSeonds}s` }
     );
 
     const refreshToken = jwt.sign(
       { id: user.id, role: user.role },
       configs.auth.refreshTokenSecretKey,
-      {
-        expiresIn: configs.auth.refreshTokenExpiresInSeonds + "s",
-      }
+      { expiresIn: `${configs.auth.refreshTokenExpiresInSeonds}s` }
     );
 
     const refreshTokenHashed = bcrypt.hashSync(refreshToken, 10);
@@ -74,22 +79,25 @@ exports.login = async (req, res, next) => {
       httpOnly: true,
       secure: true,
       sameSite: "strict",
-      maxAge: configs.auth.accessTokenExpiresInSeonds * 1000
+      maxAge: configs.auth.accessTokenExpiresInSeonds * 1000,
     });
 
-    
     res.cookie("refreshToken", refreshTokenHashed, {
       httpOnly: true,
       secure: true,
       sameSite: "strict",
       maxAge: configs.auth.refreshTokenExpiresInSeonds * 1000,
     });
-    
 
-    return res.status(201).json({
-      message: "کاربر با موفقیت لاگین شد"
-    })
-
+    return res.status(200).json({
+      message: "User logged in successfully.",
+      user: {
+        id: user.id,
+        name: user.name,
+        username: user.username,
+        role: user.role,
+      },
+    });
   } catch (error) {
     next(error);
   }

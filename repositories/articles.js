@@ -1,5 +1,5 @@
-const { search } = require("../controllers/home");
 const db = require("./../db");
+const getTagsOfArticle = require("./../utils/getTagsOfArticle");
 
 const createArticle = async ({
   title,
@@ -65,7 +65,7 @@ const removeArticle = async (articleId) => {
   try {
     const query = "DELETE FROM articles WHERE id = ?";
 
-    const article = await db.query(query, [articleId]);
+    const [article] = await db.query(query, [articleId]);
     return article.affectedRows > 0;
   } catch (error) {
     throw error;
@@ -114,9 +114,8 @@ ORDER BY
 };
 
 const getAllArticles = async () => {
-
   try {
-    const query = `SELECT articles.id , articles.title , articles.content , articles.slug , articles.cover , articles.created_at , tags.title AS "Tag_Title" , tags.slug AS "Tag_Slug" , users.name AS "Author_Name" , users.username AS "Author_Username" FROM articles_tags
+    const query = `SELECT articles.id , articles.title , articles.content , articles.slug , articles.cover , articles.created_at , tags.title AS "Tag_Title" , tags.slug AS "Tag_Slug" , users.name AS "Author_Name" , users.username AS "Author_Username" , users.avator AS "Author_Profile" FROM articles_tags
     INNER JOIN articles ON articles_tags.article_id = articles.id
     INNER JOIN tags ON articles_tags.tag_id = tags.id
     INNER JOIN users ON articles.author_id = users.id
@@ -124,36 +123,45 @@ const getAllArticles = async () => {
 
     const [articles] = await db.query(query);
 
+    return getTagsOfArticle(articles);
+    
+  } catch (error) {
+    throw error;
+  }
+};
 
-    const formattedArticles = []
+const getArticlesOfAuthor = async (author_id) => {
+  try {
+    const query = `SELECT articles.id , articles.title , articles.content , articles.slug , articles.status , articles.created_at , articles.updated_at , users.name AS "Author_Name" , users.username AS "Author_Username" , users.avator AS "Author_Profile" FROM articles
+    INNER JOIN users ON author_id = users.id
+    WHERE users.id = ?`;
 
-    for (const article of articles) {
-      const [tags] = await db.query(`
-      SELECT tags.id , tags.title , tags.slug FROM articles_tags
-      INNER JOIN tags ON articles_tags.tag_id = tags.id
-      WHERE articles_tags.article_id = ?` , [article.id])
+    const [articles] = await db.query(query, [author_id]);
 
-      formattedArticles.push({
-        id: article.id,
-        title: article.title,
-        content: article.content,
-        slug: article.slug,
-        cover: article.cover,
-        created_at : article.created_at,
-        author: {
-          name: article.Author_Name,
-          username: article.Author_Username
-        },
-        tags: tags.map((tag) => tag.title && tag.slug)
-      })
+    return getTagsOfArticle(articles);
 
-    }
+  } catch (error) {
+    throw error;
+  }
+};
+
+const getArticleInfoBySlug = async (slug) => {
 
 
-    return formattedArticles;
+  try {
+    const query = `SELECT articles.id , articles.title , articles.content , articles.slug , articles.created_at , articles.cover , users.name AS "Author_Name" , users.username AS "Author_Username" , users.avator AS "Author_Profile" FROM articles
+    INNER JOIN users ON users.id = articles.author_id
+    WHERE articles.slug = ?`;
+
+    const [article] = await db.query(query, [slug]);
+
+    
+    return getTagsOfArticle(article);
+
   } catch (error) {
     throw error
   }
+
 
 }
 
@@ -163,4 +171,6 @@ module.exports = {
   addTagToArticle,
   searchInArticles,
   getAllArticles,
+  getArticlesOfAuthor,
+  getArticleInfoBySlug,
 };

@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser');
 const authRoute = require('./routes/auth');
 const tagsRoute = require('./routes/tags');
 const homeRoute = require("./routes/home");
+const writerRoute = require("./routes/writer");
 const articlesRoute = require("./routes/articles");
 
 const errorHandler = require('./middlewares/errorHandler');
@@ -23,6 +24,7 @@ app.use("/", homeRoute);
 app.use("/auth", authRoute);
 app.use("/tag", tagsRoute);
 app.use("/article", articlesRoute);
+app.use("/writer", writerRoute);
 
 app.use(errorHandler);
 

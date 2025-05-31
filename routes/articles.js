@@ -3,6 +3,7 @@ const router = new express.Router()
 const multer = require('multer');
 const path = require('path');
 const authGurad = require('../middlewares/authGuard');
+const roleGuard = require("../middlewares/roleGuard");
 const controller = require('../controllers/articles');
 
 // const storage = multer.diskStorage({
@@ -33,7 +34,11 @@ const controller = require('../controllers/articles');
 //     limits: {fileSize: 3*1024*1024}
 // })
 
-router.route('/').post(authGurad ,controller.createArticle).get(controller.getAllArticles).delete(authGurad , controller.removeArticle)
+router
+  .route("/")
+  .post(authGurad, roleGuard("admin" || "author"), controller.createArticle)
+  .get(controller.getAllArticles)
+  .delete(authGurad, roleGuard("admin" || "author"), controller.removeArticle);
 
 router.route('/:slug').get(controller.getOneArticleBySlug)
 

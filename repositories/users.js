@@ -1,24 +1,25 @@
 const db = require("../db");
 
 const createUser = async ({ name, username, email, password }) => {
-
-  console.log(password);
   const insertedUserQuery =
-    "INSERT INTO users (name , username , email , password) VALUES (? , ? , ? , ?)";
+    "INSERT INTO users (name, username, email, password) VALUES (?, ?, ?, ?)";
 
-  const insertedUser = await db.query(insertedUserQuery, [
+  const [insertedUser] = await db.query(insertedUserQuery, [
     name,
     username,
     email,
     password,
   ]);
 
-  const selectInsertedUserQuery = "SELECT * FROM users WHERE id = ?"
-  const user = await db.query(selectInsertedUserQuery, [insertedUser.insertId]);
+  const selectInsertedUserQuery = "SELECT * FROM users WHERE id = ?";
+  const [user] = await db.query(selectInsertedUserQuery, [
+    insertedUser.insertId,
+  ]);
 
 
   return user[0];
 };
+
 
 
 
