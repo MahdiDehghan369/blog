@@ -1,10 +1,9 @@
 const yup = require("yup");
 
 const registerSchema = yup.object().shape({
-  name: yup.string().max(255).required(),
   username: yup
     .string()
-    .min(8)
+    .min(3)
     .max(255)
     .matches(
       /^[a-zA-Z0-9]+([._]?[a-zA-Z0-9]+)*$/,

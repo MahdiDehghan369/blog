@@ -58,10 +58,73 @@ const findById = async ({ id }) => {
   }
 };
 
+const setName = async (id, name) => {
+  try {
+    const query = `UPDATE users SET name = ? WHERE id = ?`;
+    const [result] = await db.query(query, [name, id]);
+
+    if (result.affectedRows === 0) {
+      return { success: false, message: "User not found or name unchanged" };
+    }
+
+    const [userRows] = await db.query(
+      `SELECT id, name FROM users WHERE id = ?`,
+      [id]
+    );
+
+    return { success: true, user: userRows[0] };
+  } catch (error) {
+    throw new Error("Database error: " + error.message);
+  }
+};
+
+const setEmail = async (id, email) => {
+  try {
+    const query = `UPDATE users SET email = ? WHERE id = ?`;
+    const [result] = await db.query(query, [email, id]);
+
+    if (result.affectedRows === 0) {
+      return { success: false, message: "User not found or email unchanged" };
+    }
+
+    const [userRows] = await db.query(
+      `SELECT id, email FROM users WHERE id = ?`,
+      [id]
+    );
+
+    return { success: true, user: userRows[0] };
+  } catch (error) {
+    throw new Error("Database error: " + error.message);
+  }
+};
+
+const setBio = async (id, bio) => {
+  try {
+    const query = `UPDATE users SET bio = ? WHERE id = ?`;
+    const [result] = await db.query(query, [bio, id]);
+
+    if (result.affectedRows === 0) {
+      return { success: false, message: "User not found or bio unchanged" };
+    }
+
+    const [userRows] = await db.query(
+      `SELECT id, bio FROM users WHERE id = ?`,
+      [id]
+    );
+
+    return { success: true, user: userRows[0] };
+  } catch (error) {
+    throw new Error("Database error: " + error.message);
+  }
+};
+
 
 module.exports = {
   createUser,
   findById,
   findByUsername,
   findByEmail,
+  setName,
+  setEmail,
+  setBio,
 };

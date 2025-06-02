@@ -7,6 +7,7 @@ const authRoute = require('./routes/auth');
 const tagsRoute = require('./routes/tags');
 const homeRoute = require("./routes/home");
 const articlesRoute = require("./routes/articles");
+const userRoute = require("./routes/user");
 
 const errorHandler = require('./middlewares/errorHandler');
 
@@ -23,6 +24,7 @@ app.use("/", homeRoute);
 app.use("/auth", authRoute);
 app.use("/tag", tagsRoute);
 app.use("/article", articlesRoute);
+app.use("/user", userRoute);
 
 app.use(errorHandler);
 

@@ -123,7 +123,7 @@ const getAllArticles = async () => {
 
     const [articles] = await db.query(query);
 
-    return getTagsOfArticle(articles);
+    return mapArticlesWithTagsAndAuthor(articles);
   } catch (error) {
     throw error;
   }
@@ -137,7 +137,7 @@ const getArticlesOfAuthor = async (author_id) => {
 
     const [articles] = await db.query(query, [author_id]);
 
-    return await getTagsOfArticle(articles);
+    return await mapArticlesWithTagsAndAuthor(articles);
   } catch (error) {
     throw error;
   }
@@ -151,7 +151,7 @@ const getPublishedArticlesOfAuthor = async (author_id) => {
 
     const [articles] = await db.query(query, [author_id]);
 
-    return await  getTagsOfArticle(articles);
+    return await  mapArticlesWithTagsAndAuthor(articles);
   } catch (error) {
     throw error;
   }
@@ -165,7 +165,7 @@ const getDraftedArticlesOfAuthor = async (author_id) => {
 
     const [articles] = await db.query(query, [author_id]);
 
-    return await getTagsOfArticle(articles);
+    return await mapArticlesWithTagsAndAuthor(articles);
   } catch (error) {
     throw error;
   }

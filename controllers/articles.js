@@ -119,18 +119,8 @@ exports.getPopularArticles = async (req, res, next) => {
 
 exports.getArticlesOfAuthor = async (req, res, next) => {
   try {
-    const accessToken = req.cookies?.accessToken;
 
-
-    if(!accessToken){
-      return res
-        .status(401)
-        .json({ message: "Authentication required. Please log in." });
-    }
-
-    const decodedToken = await jwt.verify(accessToken , configs.auth.accessTokenSecretKey)
-
-    const authorId = decodedToken.id
+    const authorId = req.user.id
 
     const articles = await Article.getArticlesOfAuthor(authorId);
 
@@ -156,22 +146,7 @@ exports.getArticlesOfAuthor = async (req, res, next) => {
 
 exports.getPublishedArticlesOfAuthor = async (req, res, next) => {
   try {
-    const accessToken = req.cookies?.accessToken;
-
-
-    if (!accessToken) {
-      return res
-        .status(401)
-        .json({ message: "Authentication required. Please log in." });
-    }
-
-    const decodedToken = await jwt.verify(
-      accessToken,
-      configs.auth.accessTokenSecretKey
-    );
-
-
-    const authorId = decodedToken.id;
+    const authorId = req.user.id;
 
     const articles = await Article.getPublishedArticlesOfAuthor(authorId);
 
@@ -197,20 +172,8 @@ exports.getPublishedArticlesOfAuthor = async (req, res, next) => {
 
 exports.getDraftedArticlesOfAuthor = async (req, res, next) => {
   try {
-    const accessToken = req.cookies?.accessToken;
 
-    if (!accessToken) {
-      return res
-        .status(401)
-        .json({ message: "Authentication required. Please log in." });
-    }
-
-    const decodedToken = await jwt.verify(
-      accessToken,
-      configs.auth.accessTokenSecretKey
-    );
-
-    const authorId = decodedToken.id;
+    const authorId = req.user.id;
 
     const articles = await Article.getDraftedArticlesOfAuthor(authorId);
 

@@ -10,7 +10,7 @@ const createTagSchema = yup.object().shape({
     .string()
     .max(255)
     .matches(
-      /^[a-z0-9\u0600-\u06FF ]+(?:-[a-z0-9\u0600-\u06FF ]+)*$/,
+      /^[a-z0-9 ]+(?:-[a-z0-9 ]+)*$/,
       "Slug can only include letters (a-z, Persian), numbers (0-9), spaces, and hyphens (-)."
     )
     .required("Slug is required!"),
