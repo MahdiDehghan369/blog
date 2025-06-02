@@ -1,6 +1,5 @@
 const Tag = require("../repositories/tags");
 const calculateRelativeTimeDifference = require('./../utils/funcs');
-const summarize = require('./../utils/summarize');
 
 exports.createTag = async (req, res, next) => {
   try {
@@ -35,8 +34,6 @@ exports.createTag = async (req, res, next) => {
   }
 };
 
-
-
 exports.getAlltags = async (req, res, next) => {
   try {
     const tags = await Tag.getAllTags();
@@ -69,8 +66,6 @@ exports.removeTag = async (req, res, next) => {
   }
 };
 
-
-
 exports.updateTag = async (req, res, next) => {
   try {
     const { id, title } = req.body;
@@ -91,10 +86,9 @@ exports.updateTag = async (req, res, next) => {
   }
 };
 
-
 exports.findArticlesByTags = async (req, res, next) => {
   try {
-    const tagSlug = req.params.tagSlug;
+    const tagSlug = req.params.slug;
 
     const articles = await Tag.findArticlesByTags(tagSlug);
 
@@ -106,7 +100,6 @@ exports.findArticlesByTags = async (req, res, next) => {
 
     articles.forEach((article) => {
       article.created_at = calculateRelativeTimeDifference(article.created_at);
-      article.summary = summarize(article.content, 200);
     });
 
     return res.status(200).json(articles);

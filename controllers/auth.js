@@ -1,36 +1,24 @@
 const User = require("./../repositories/users");
 const jwt = require("jsonwebtoken");
-const svgCaptcha = require("svg-captcha");
 const bcrypt = require("bcryptjs");
 const configs = require("../configs");
 
 exports.register = async (req, res, next) => {
   try {
-    const { name, username, email, password } = req.body;
-
-    const userIsExists = await User.findByUsernameAndEmail({ username, email });
-
-    if (userIsExists) {
-      return res.status(422).json({
-        message: "A user with the same username or email already exists.",
-      });
-    }
+    const { username, email, password } = req.body;
 
     const hashedPassword = bcrypt.hashSync(password, 10);
 
     const user = await User.createUser({
-      name,
       username,
       email,
       password: hashedPassword,
     });
 
-
     return res.status(201).json({
       message: "User registered successfully.",
       user: {
         id: user.id,
-        name: user.name,
         username: user.username,
         email: user.email,
       },
@@ -39,7 +27,6 @@ exports.register = async (req, res, next) => {
     next(error);
   }
 };
-
 
 exports.login = async (req, res, next) => {
   try {
@@ -93,10 +80,60 @@ exports.login = async (req, res, next) => {
       message: "User logged in successfully.",
       user: {
         id: user.id,
-        name: user.name,
         username: user.username,
         role: user.role,
       },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.checkEmail = async (req , res , next) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(422).json({ message: "Email is required" });
+    }
+
+    const isEmailExists = await User.findByEmail({ email });
+
+    if (isEmailExists) {
+      return res.status(200).json({
+        exists: true,
+        message: "Email is already taken",
+      });
+    }
+
+    return res.status(200).json({
+      exists: false,
+      message: "Email is available",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+exports.checkUsername = async (req, res, next) => {
+  try {
+    const { username } = req.body;
+    if (!username) {
+      return res.status(422).json({ message: "Username is required" });
+    }
+
+    const isUsernameExists = await User.findByUsername({ username });
+
+    if (isUsernameExists) {
+      return res.status(200).json({
+        exists: true,
+        message: "Username is already taken",
+      });
+    }
+
+    return res.status(200).json({
+      exists: false,
+      message: "Username is available",
     });
   } catch (error) {
     next(error);
@@ -107,17 +144,19 @@ exports.refresh = async (req, res, next) => {};
 
 exports.getMe = async (req, res, next) => {};
 
-exports.logout = async (req, res, next) => {};
-
-exports.getCaptcha = async(req , res , next) => {
+exports.logout = async (req, res, next) => {
   try {
-    const captcha = svgCaptcha.create({ size: 5, color: true, noise: 5 });
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+    });
 
-    return res.status(201).json({
-      captcha,
+    return res.status(200).json({
+      success: true,
+      message: "Logout successful",
     });
   } catch (error) {
-    next(error)
+    next(error);
   }
-
-}
+};

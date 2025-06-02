@@ -2,25 +2,13 @@ const Article = require("./../repositories/articles");
 const sharp = require('sharp');
 const path = require('path');
 const calculateTime = require('./../utils/funcs');
-const summarize = require('./../utils/summarize');
-const { db } = require("../configs");
+const jwt = require("jsonwebtoken");
+const configs = require("../configs");
 
 
 exports.createArticle = async (req, res, next) => {
   try {
-    let { title, content, slug, meta_title, meta_description , tags } = req.body;
-
-    console.log(req.body);
-
-    const forbiddenChars =
-      /^[a-z0-9\u0600-\u06FF ]+(?:-[a-z0-9\u0600-\u06FF ]+)*$/;
-
-    if (!forbiddenChars.test(slug)) {
-      return res.status(409).json({
-        message:
-          "Slug can only include letters (a-z, Persian), numbers (0-9), spaces, and hyphens (-).",
-      });
-    }
+    let { title, content, slug, tags, status , summery } = req.body;
 
     slug = slug.trim().replace(/\s+/g, '-').toLowerCase();
 
@@ -55,10 +43,10 @@ exports.createArticle = async (req, res, next) => {
     const article = await Article.createArticle({
       title,
       content,
+      summery,
       slug,
       author_id,
-      meta_title,
-      meta_description,
+      status
       // cover: coverPath
     });
 
@@ -94,10 +82,6 @@ exports.getAllArticles = async (req, res, next) => {
       article.created_at = calculateTime(article.created_at)
     }
 
-    for (const article of articles) {
-      article.summery = await summarize(article.content , 200)
-    }
-
     return res.status(201).json(articles)
 
   } catch (error) {
@@ -126,14 +110,6 @@ exports.removeArticle = async (req, res, next) => {
   }
 };
 
-
-exports.getOneArticleBySlug = async (req, res, next) => {
-  try {
-  } catch (error) {
-    next(error);
-  }
-};
-
 exports.getPopularArticles = async (req, res, next) => {
   try {
   } catch (error) {
@@ -143,14 +119,18 @@ exports.getPopularArticles = async (req, res, next) => {
 
 exports.getArticlesOfAuthor = async (req, res, next) => {
   try {
+    const accessToken = req.cookies?.accessToken;
 
-    const authorId = req.user.id
 
-    if (!authorId) {
-      return res.status(422).json({
-        message: "Author ID is required.",
-      });
+    if(!accessToken){
+      return res
+        .status(401)
+        .json({ message: "Authentication required. Please log in." });
     }
+
+    const decodedToken = await jwt.verify(accessToken , configs.auth.accessTokenSecretKey)
+
+    const authorId = decodedToken.id
 
     const articles = await Article.getArticlesOfAuthor(authorId);
 
@@ -162,7 +142,87 @@ exports.getArticlesOfAuthor = async (req, res, next) => {
 
     for (const article of articles) {
       article.created_at = calculateTime(article.created_at)
-      article.summery = summarize(article.content , 200)
+      article.updated_at = calculateTime(article.updated_at)
+    }
+
+    return res.status(200).json({
+      message: "Articles retrieved successfully.",
+      data: articles,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getPublishedArticlesOfAuthor = async (req, res, next) => {
+  try {
+    const accessToken = req.cookies?.accessToken;
+
+
+    if (!accessToken) {
+      return res
+        .status(401)
+        .json({ message: "Authentication required. Please log in." });
+    }
+
+    const decodedToken = await jwt.verify(
+      accessToken,
+      configs.auth.accessTokenSecretKey
+    );
+
+
+    const authorId = decodedToken.id;
+
+    const articles = await Article.getPublishedArticlesOfAuthor(authorId);
+
+    if (!articles || articles.length === 0) {
+      return res.status(404).json({
+        message: "No articles found for the specified author.",
+      });
+    }
+
+    for (const article of articles) {
+      article.created_at = calculateTime(article.created_at);
+      article.updated_at = calculateTime(article.updated_at);
+    }
+
+    return res.status(200).json({
+      message: "Articles retrieved successfully.",
+      data: articles,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getDraftedArticlesOfAuthor = async (req, res, next) => {
+  try {
+    const accessToken = req.cookies?.accessToken;
+
+    if (!accessToken) {
+      return res
+        .status(401)
+        .json({ message: "Authentication required. Please log in." });
+    }
+
+    const decodedToken = await jwt.verify(
+      accessToken,
+      configs.auth.accessTokenSecretKey
+    );
+
+    const authorId = decodedToken.id;
+
+    const articles = await Article.getDraftedArticlesOfAuthor(authorId);
+
+    if (!articles || articles.length === 0) {
+      return res.status(404).json({
+        message: "No articles found for the specified author.",
+      });
+    }
+
+    for (const article of articles) {
+      article.created_at = calculateTime(article.created_at);
+      article.updated_at = calculateTime(article.updated_at);
     }
 
     return res.status(200).json({
@@ -186,8 +246,10 @@ exports.getArticleInfoBySlug = async (req, res, next) => {
       });
     }
 
-    if (article.created_at) {
+
+    if (article) {
       article.created_at = calculateTime(article.created_at);
+      article.updated_at = calculateTime(article.updated_at);
     }
 
     return res.status(200).json(article);

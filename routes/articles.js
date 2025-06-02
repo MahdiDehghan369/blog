@@ -6,6 +6,11 @@ const authGurad = require('../middlewares/authGuard');
 const roleGuard = require("../middlewares/roleGuard");
 const controller = require('../controllers/articles');
 
+const validateBody = require("../middlewares/validateBody");
+const validateParams = require("../middlewares/validateParams");
+const createArticleValidator = require('./../validators/createArticle');
+const checkSlugValidator = require("./../validators/checkSlug");
+
 // const storage = multer.diskStorage({
 //     destination: (req , file, cb) => {
 //         cb(null, path.join("..", "public", "images", "article_cover"));
@@ -36,11 +41,20 @@ const controller = require('../controllers/articles');
 
 router
   .route("/")
-  .post(authGurad, roleGuard("admin" || "author"), controller.createArticle)
+  .post(
+    authGurad,
+    validateBody(createArticleValidator),
+    controller.createArticle
+  )
   .get(controller.getAllArticles)
-  .delete(authGurad, roleGuard("admin" || "author"), controller.removeArticle);
+  .delete(authGurad, controller.removeArticle);
 
-router.route('/:slug').get(controller.getOneArticleBySlug)
+router.route('/published').get(authGurad , controller.getPublishedArticlesOfAuthor)
+router.route('/drafted').get(authGurad , controller.getDraftedArticlesOfAuthor)
+
+router
+  .route("/:slug")
+  .get(validateParams(checkSlugValidator), controller.getArticleInfoBySlug);
 
 router.route("/popular").get(controller.getPopularArticles);
 

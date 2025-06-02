@@ -1,6 +1,6 @@
-const db = require("./../db");
+const db = require("../db");
 
-const getTagsOfArticle = async (articles) => {
+const mapArticlesWithTagsAndAuthor = async (articles) => {
   const formattedArticles = [];
 
   if (Array.isArray(articles)) {
@@ -20,6 +20,7 @@ const getTagsOfArticle = async (articles) => {
         slug: article.slug,
         cover: article.cover,
         created_at: article.created_at,
+        updated_at: article.updated_at,
         author: {
           name: article.Author_Name,
           username: article.Author_Username,
@@ -51,6 +52,7 @@ const getTagsOfArticle = async (articles) => {
     slug: articles.slug,
     cover: articles.cover,
     created_at: articles.created_at,
+    updated_at: articles.updated_at,
     author: {
       name: articles.Author_Name,
       username: articles.Author_Username,
@@ -64,4 +66,4 @@ const getTagsOfArticle = async (articles) => {
   };
 };
 
-module.exports = getTagsOfArticle;
+module.exports = mapArticlesWithTagsAndAuthor;
