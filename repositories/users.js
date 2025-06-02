@@ -118,6 +118,118 @@ const setBio = async (id, bio) => {
   }
 };
 
+const setGender = async (id, gender) => {
+  try {
+    const query = `UPDATE users SET gender = ? WHERE id = ?`;
+    const [result] = await db.query(query, [gender, id]);
+
+    if (result.affectedRows === 0) {
+      return { success: false, message: "User not found or gender unchanged" };
+    }
+
+    const [userRows] = await db.query(
+      `SELECT id, gender FROM users WHERE id = ?`,
+      [id]
+    );
+
+    return { success: true, user: userRows[0] };
+  } catch (error) {
+    throw new Error("Database error: " + error.message);
+  }
+};
+
+const setBirthday = async (id, birthday) => {
+  try {
+    const query = `UPDATE users SET birthday = ? WHERE id = ?`;
+    const [result] = await db.query(query, [birthday, id]);
+
+    if (result.affectedRows === 0) {
+      return {
+        success: false,
+        message: "User not found or birthday unchanged",
+      };
+    }
+
+    const [userRows] = await db.query(
+      `SELECT id, birthday FROM users WHERE id = ?`,
+      [id]
+    );
+
+    return { success: true, user: userRows[0] };
+  } catch (error) {
+    throw new Error("Database error: " + error.message);
+  }
+};
+
+const setXProfile = async (id, x_profile) => {
+  try {
+    const query = `UPDATE users SET x_profile = ? WHERE id = ?`;
+    const [result] = await db.query(query, [x_profile, id]);
+
+    if (result.affectedRows === 0) {
+      return {
+        success: false,
+        message: "User not found or x_profile unchanged",
+      };
+    }
+
+    const [userRows] = await db.query(
+      `SELECT id, x_profile FROM users WHERE id = ?`,
+      [id]
+    );
+
+    return { success: true, user: userRows[0] };
+  } catch (error) {
+    throw new Error("Database error: " + error.message);
+  }
+};
+
+const setLinkedinProfile = async (id, linkedin_profile) => {
+  try {
+    const query = `UPDATE users SET linkedin_profile = ? WHERE id = ?`;
+    const [result] = await db.query(query, [linkedin_profile, id]);
+
+    if (result.affectedRows === 0) {
+      return {
+        success: false,
+        message: "User not found or linkedin profile unchanged",
+      };
+    }
+
+    const [userRows] = await db.query(
+      `SELECT id, linkedin_profile FROM users WHERE id = ?`,
+      [id]
+    );
+
+    return { success: true, user: userRows[0] };
+  } catch (error) {
+    throw new Error("Database error: " + error.message);
+  }
+};
+
+const setUsername = async (id, username) => {
+  try {
+    const query = `UPDATE users SET username = ? WHERE id = ?`;
+    const [result] = await db.query(query, [username, id]);
+
+    if (result.affectedRows === 0) {
+      return {
+        success: false,
+        message: "User not found or username unchanged",
+      };
+    }
+
+    const [userRows] = await db.query(
+      `SELECT id, username FROM users WHERE id = ?`,
+      [id]
+    );
+
+    return { success: true, user: userRows[0] };
+  } catch (error) {
+    throw new Error("Database error: " + error.message);
+  }
+};
+
 
 module.exports = {
   createUser,
@@ -127,4 +239,9 @@ module.exports = {
   setName,
   setEmail,
   setBio,
+  setGender,
+  setBirthday,
+  setXProfile,
+  setLinkedinProfile,
+  setUsername,
 };
