@@ -23,4 +23,12 @@ router
   .route("/check-email")
   .post(validateBody(checkEmailValidator), controller.checkEmail);
 
+
+router
+  .route("/request-reset")
+  .post(validateBody(checkEmailValidator), controller.requestReset);
+
+router.route("/verify-otp").post(controller.verifyOtp);
+router.route("/reset-password").post(controller.resetPassword);
+
 module.exports = router

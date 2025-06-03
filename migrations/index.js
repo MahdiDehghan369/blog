@@ -11,6 +11,11 @@
         "utf8"
       );
 
+      const createPassResetOtp = fs.readFileSync(
+        path.join(__dirname, "password_reset_otps_ddl.sql"),
+        "utf-8"
+      );
+
       const createTagsTable = fs.readFileSync(
         path.join(__dirname, "tags_ddl.sql"),
         "utf8"
@@ -32,6 +37,7 @@
         await connection.query(createTagsTable);
       await connection.query(createArticlesTable);
       await connection.query(createArticlesTagsTable);
+      await connection.query(createPassResetOtp);
 
       await connection.commit()
     } catch (error) {

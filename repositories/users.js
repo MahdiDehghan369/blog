@@ -230,6 +230,25 @@ const setUsername = async (id, username) => {
   }
 };
 
+const setPassword = async (email , password) => {
+  try {
+    const query = `UPDATE users SET password = ? WHERE email = ?`;
+    const [result] = await db.query(query, [password, email]);
+
+    if (result.affectedRows === 0) {
+      return {
+        success: false,
+        message: "User not found or password unchanged",
+      };
+    }
+
+
+    return { success: true, message: "passowrd changed successfully :)"};
+  } catch (error) {
+    throw new Error("Database error: " + error.message);
+  }
+};
+
 
 module.exports = {
   createUser,
@@ -241,6 +260,7 @@ module.exports = {
   setBio,
   setGender,
   setBirthday,
+  setPassword,
   setXProfile,
   setLinkedinProfile,
   setUsername,

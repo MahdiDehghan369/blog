@@ -1,7 +1,11 @@
 const User = require("./../repositories/users");
+const PassResetOtp = require("./../repositories/passResetOtp");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const configs = require("../configs");
+const configs = require("./../configs");
+const sendOtpEmail = require("./../utils/sendOtpEmail");
+const generateOtp = require("./../utils/generateOtp");
+const { number } = require("yup");
 
 exports.register = async (req, res, next) => {
   try {
@@ -89,7 +93,7 @@ exports.login = async (req, res, next) => {
   }
 };
 
-exports.checkEmail = async (req , res , next) => {
+exports.checkEmail = async (req, res, next) => {
   try {
     const { email } = req.body;
 
@@ -113,7 +117,7 @@ exports.checkEmail = async (req , res , next) => {
   } catch (error) {
     next(error);
   }
-}
+};
 
 exports.checkUsername = async (req, res, next) => {
   try {
@@ -155,6 +159,122 @@ exports.logout = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       message: "Logout successful",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.requestReset = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    const otpCode = generateOtp();
+
+    const isEmailExistsInDB = await User.findByEmail({email});
+
+    if (!isEmailExistsInDB) {
+      return res.status(201).json({
+        message: "If this email is registered, an OTP has been sent.",
+      });
+    }
+
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+    await PassResetOtp.insertOtpCodeOnDb(email , otpCode , expiresAt)
+
+    const sendEmail = await sendOtpEmail(email , otpCode);
+
+    res.status(201).json({
+      message: "If this email is registered, an OTP has been sent.",
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.verifyOtp = async (req, res, next) => {
+  try {
+    const { email, otpCode } = req.body;
+
+    const getOtpCodeFromDB = await PassResetOtp.getOtpCodeByEmail(email);
+
+    if (!getOtpCodeFromDB) {
+      return res.status(404).json({ message: "Invalid or expired OTP" });
+    }
+
+    if (getOtpCodeFromDB.is_used) {
+      return res.status(400).json({ message: "OTP has already been used" });
+    }
+
+    if (new Date(getOtpCodeFromDB.expires_at) < new Date()) {
+      return res.status(400).json({ message: "OTP has expired" });
+    }
+
+    if (getOtpCodeFromDB.otp_code !== otpCode) {
+      return res.status(400).json({ message: "Incorrect OTP" });
+    }
+
+    await PassResetOtp.markOtpAsUsed(getOtpCodeFromDB.id);
+
+    const token = jwt.sign(
+      { email, purpose: "reset_password" },
+      configs.resetPassword.resetPassowrdTokenSecretKey,
+      {
+        expiresIn: `${configs.resetPassword.resetPassowrdExpiresInSeconds}s`
+      }
+    );
+
+    res.cookie("ResetPasswordToken", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "Strict",
+      maxAge: configs.resetPassword.resetPassowrdExpiresInSeconds * 1000,
+    });
+
+    return res.status(200).json({
+      message: "OTP verified successfully",
+      token, 
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.resetPassword = async (req, res, next) => {
+  try {
+    const { password } = req.body;
+
+    const resetPasswordToken = req.cookies?.ResetPasswordToken;
+    if (!resetPasswordToken) {
+      return res.status(401).json({ message: "Reset token is missing" });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(
+        resetPasswordToken,
+        configs.resetPassword.resetPassowrdTokenSecretKey
+      );
+    } catch (err) {
+      return res.status(401).json({ message: "Invalid or expired token" });
+    }
+
+    if (decoded.purpose !== "reset_password") {
+      return res.status(403).json({ message: "Invalid token purpose" });
+    }
+
+    const email = decoded.email;
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await User.setPassword(email, hashedPassword);
+
+    res.clearCookie("ResetPasswordToken");
+
+    return res.status(200).json({
+      message: "Password has been reset successfully.",
     });
   } catch (error) {
     next(error);
