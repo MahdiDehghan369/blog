@@ -104,7 +104,7 @@ exports.checkEmail = async (req, res, next) => {
     const isEmailExists = await User.findByEmail({ email });
 
     if (isEmailExists) {
-      return res.status(200).json({
+      return res.status(409).json({
         exists: true,
         message: "Email is already taken",
       });
@@ -129,7 +129,7 @@ exports.checkUsername = async (req, res, next) => {
     const isUsernameExists = await User.findByUsername({ username });
 
     if (isUsernameExists) {
-      return res.status(200).json({
+      return res.status(409).json({
         exists: true,
         message: "Username is already taken",
       });
@@ -205,7 +205,7 @@ exports.verifyOtp = async (req, res, next) => {
     }
 
     if (getOtpCodeFromDB.is_used) {
-      return res.status(400).json({ message: "OTP has already been used" });
+      return res.status(409).json({ message: "OTP has already been used" });
     }
 
     if (new Date(getOtpCodeFromDB.expires_at) < new Date()) {
@@ -213,7 +213,7 @@ exports.verifyOtp = async (req, res, next) => {
     }
 
     if (getOtpCodeFromDB.otp_code !== otpCode) {
-      return res.status(400).json({ message: "Incorrect OTP" });
+      return res.status(422).json({ message: "Incorrect OTP" });
     }
 
     await PassResetOtp.markOtpAsUsed(getOtpCodeFromDB.id);
@@ -248,7 +248,7 @@ exports.resetPassword = async (req, res, next) => {
 
     const resetPasswordToken = req.cookies?.ResetPasswordToken;
     if (!resetPasswordToken) {
-      return res.status(401).json({ message: "Reset token is missing" });
+      return res.status(400).json({ message: "Reset token is missing" });
     }
 
     let decoded;

@@ -8,6 +8,7 @@ const tagsRoute = require('./routes/tags');
 const homeRoute = require("./routes/home");
 const articlesRoute = require("./routes/articles");
 const userRoute = require("./routes/user");
+const apiDocRoute = require("./apiDoc/swagger.routes");
 
 const errorHandler = require('./middlewares/errorHandler');
 
@@ -25,6 +26,7 @@ app.use("/auth", authRoute);
 app.use("/tag", tagsRoute);
 app.use("/article", articlesRoute);
 app.use("/user", userRoute);
+app.use("/api-doc", apiDocRoute);
 
 app.use(errorHandler);
 
