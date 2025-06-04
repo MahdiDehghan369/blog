@@ -7,6 +7,8 @@ const registerValidator = require('./../validators/register');
 const loginValidator = require('./../validators/login');
 const checkUsernameValidator = require("./../validators/checkUsername");
 const checkEmailValidator = require("./../validators/checkEmail");
+const verifyOtpValidator = require("./../validators/verifyOtp");
+const checkPassowrdValidator = require("./../validators/checkPassowrd");
 
 
 router
@@ -28,7 +30,9 @@ router
   .route("/request-reset")
   .post(validateBody(checkEmailValidator), controller.requestReset);
 
-router.route("/verify-otp").post(controller.verifyOtp);
-router.route("/reset-password").post(controller.resetPassword);
+router.route("/verify-otp").post(validateBody(verifyOtpValidator), controller.verifyOtp);
+router
+  .route("/reset-password")
+  .post(validateBody(checkPassowrdValidator), controller.resetPassword);
 
 module.exports = router

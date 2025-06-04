@@ -1,6 +1,9 @@
 const express = require("express");
 const router = new express.Router();
 
+const multer = require('multer');
+const uploader = multer()
+
 const authGuard = require("./../middlewares/authGuard");
 const controller = require("./../controllers/user");
 
@@ -21,7 +24,7 @@ router
   .route("/set-email")
   .patch(authGuard, validateBody(emailValidator), controller.setEmail);
 router.route("/set-bio").patch(authGuard, validateBody(bioValidator) , controller.setBio);
-router.route("/set-profile").patch(authGuard, controller.setProfile);
+router.route("/set-profile").patch(authGuard, uploader.single('profile') ,controller.setProfile);
 router.route("/set-gender").patch(authGuard, validateBody(genderValidator) , controller.setGender);
 router.route("/set-birthday").patch(authGuard, validateBody(birthdayValidator) , controller.setBirthday);
 router.route("/set-x-profile").patch(authGuard, validateBody(xProfileValidator) , controller.setXProfile);
@@ -35,5 +38,7 @@ router
 router
   .route("/set-username")
   .patch(authGuard, validateBody(usernameValidator), controller.setUsername);
+
+router.route('/remove-profile').delete(authGuard , controller.removeProfile)
 
 module.exports = router;

@@ -10,44 +10,21 @@ const validateBody = require("../middlewares/validateBody");
 const validateParams = require("../middlewares/validateParams");
 const createArticleValidator = require('./../validators/createArticle');
 const checkSlugValidator = require("./../validators/checkSlug");
+const checkIdValidator = require("./../validators/checkId");
 
-// const storage = multer.diskStorage({
-//     destination: (req , file, cb) => {
-//         cb(null, path.join("..", "public", "images", "article_cover"));
-//     },
-//     filename: (req, file , cb) => {
-//         const filename = `${file.originalname}${Date.now()}${path.extname(file.originalname)}`
-//         cb(null , filename)
-//     }
-// })
+const uploader = multer()
 
-// const fileFilter = (req , file , cb) => {
-//     const validTypes = /jpeg|png|jpg|webp/
-//     const mimeType = validTypes.test(file.mimetype)
-//     const extName = validTypes.test(path.extname(file.originalname))
-
-//     if(mimeType && extName){
-//         return cb(null , true)
-//     }
-
-//     return cb(new Error("File type is not valid !!"))
-// }
-
-// const uploader = multer({
-//     storage,
-//     fileFilter,
-//     limits: {fileSize: 3*1024*1024}
-// })
 
 router
   .route("/")
   .post(
     authGurad,
+    uploader.single("cover"),
     validateBody(createArticleValidator),
     controller.createArticle
   )
   .get(controller.getAllArticles)
-  .delete(authGurad, controller.removeArticle);
+  .delete(authGurad, validateBody(checkIdValidator), controller.removeArticle);
 
 router.route('/published').get(authGurad , controller.getPublishedArticlesOfAuthor)
 router.route('/drafted').get(authGurad , controller.getDraftedArticlesOfAuthor)

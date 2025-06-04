@@ -5,7 +5,7 @@ CREATE TABLE articles (
     slug varchar(255) NOT NULL,
     author_id int(10) unsigned NOT NULL,
     status ENUM('draft', 'published') DEFAULT 'draft',
-    summery TEXT DEFAULT NULL,
+    summary TEXT DEFAULT NULL,
     cover varchar(255) DEFAULT NULL,
     created_at datetime DEFAULT CURRENT_TIMESTAMP,
     updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

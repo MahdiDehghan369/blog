@@ -4,69 +4,97 @@ const path = require('path');
 const calculateTime = require('./../utils/funcs');
 const jwt = require("jsonwebtoken");
 const configs = require("../configs");
+const fs = require('fs');
 
 
 exports.createArticle = async (req, res, next) => {
   try {
-    let { title, content, slug, tags, status , summery } = req.body;
+    let { title, content, slug, tags, status, summary } = req.body;
 
-    slug = slug.trim().replace(/\s+/g, '-').toLowerCase();
-
-
+    slug = slug.trim().replace(/\s+/g, "-").toLowerCase();
     const author_id = req.user.id;
 
-    // const fileBuffer = req.file.buffer
-    // const coverPath = `/images/article_cover/${Date.now()}${path.extname(req.file.originalname)}`;
-    // const outputPath = path.join(__dirname, "..", "public", coverPath);
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "Cover image is required.",
+      });
+    }
 
+    const fileBuffer = req.file.buffer;
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    const cover = `${Date.now()}${ext}`;
+    const coverPath = `/images/article_cover/${cover}`;
+    const outputPath = path.join(
+      __dirname,
+      "..",
+      "public",
+      "images",
+      "article_cover",
+      cover
+    );
 
-    // try {
-    //   if (ext === ".png") {
-    //     await sharp(fileBuffer).png({ quality: 60 }).toFile(outputPath);
-    //   } else if (ext === ".jpeg" || ext === ".jpg") {
-    //     await sharp(fileBuffer).jpeg({ quality: 60 }).toFile(outputPath);
-    //   } else if (ext === ".webp") {
-    //     await sharp(fileBuffer).webp({ quality: 60 }).toFile(outputPath);
-    //   } else {
-    //     return res.status(422).json({
-    //       message:
-    //         "Unsupported file format. Only JPEG, PNG, and WEBP are allowed.",
-    //     });
-    //   }
-    // } catch (err) {
-    //   return res.status(500).json({
-    //     message: "Image compression failed.",
-    //     error: err.message,
-    //   });
-    // }
+    try {
+      if (ext === ".png") {
+        await sharp(fileBuffer).png({ quality: 60 }).toFile(outputPath);
+      } else if (ext === ".jpeg" || ext === ".jpg") {
+        await sharp(fileBuffer).jpeg({ quality: 60 }).toFile(outputPath);
+      } else if (ext === ".webp") {
+        await sharp(fileBuffer).webp({ quality: 60 }).toFile(outputPath);
+      } else {
+        return res.status(422).json({
+          success: false,
+          message:
+            "Unsupported file format. Only JPEG, PNG, and WEBP are allowed.",
+        });
+      }
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: "Image compression failed.",
+        error: err.message,
+      });
+    }
 
     const article = await Article.createArticle({
       title,
       content,
-      summery,
       slug,
       author_id,
-      status
-      // cover: coverPath
+      status,
+      cover, 
+      summary,
     });
 
 
-    for (const tag of tags) {
-      await Article.addTagToArticle(article.id, Number(tag));
+    if (Array.isArray(tags)) {
+      for (const tag of tags) {
+        await Article.addTagToArticle(article.id, Number(tag));
+      }
     }
 
     return res.status(201).json({
-      message: "Article Created Successfully :)",
+      success: true,
+      message: "Article created successfully 🙂",
       article,
     });
   } catch (error) {
     if (error.status === 409) {
-      return res.status(409).json({ message: error.message });
+      return res.status(409).json({
+        success: false,
+        message: error.message,
+      });
     }
-    return next(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "An unexpected error occurred.",
+      error: error.message,
+    });
+
+    next(error)
   }
 };
-
 exports.getAllArticles = async (req, res, next) => {
   try {
 
@@ -94,21 +122,52 @@ exports.removeArticle = async (req, res, next) => {
   try {
     const { id } = req.body;
 
-    const isArticleRemoved = await Article.removeArticle(id);
+    const article = await Article.getArticleInfoById(id);
 
-    if (!isArticleRemoved) {
+    if (!article || !article[0]) {
       return res.status(404).json({
+        success: false,
+        message: "Article not found.",
+      });
+    }
+
+    const cover = article[0].cover;
+
+    if (cover) {
+      const coverPath = path.join(
+        __dirname,
+        "..",
+        "public",
+        "images",
+        "article_cover",
+        cover
+      );
+
+      try {
+        await fs.promises.unlink(coverPath);
+      } catch (err) {
+        if (err.code !== "ENOENT") throw err;
+      }
+    }
+
+    const result = await Article.removeArticle(id);
+
+    if (!result || result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
         message: "Article not found or could not be deleted.",
       });
     }
 
     return res.status(200).json({
+      success: true,
       message: "Article has been successfully deleted.",
     });
   } catch (error) {
     next(error);
   }
 };
+
 
 exports.getPopularArticles = async (req, res, next) => {
   try {

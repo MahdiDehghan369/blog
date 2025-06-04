@@ -46,7 +46,7 @@ const findByEmail = async ({ email }) => {
   }
 };
 
-const findById = async ({ id }) => {
+const findById = async (id) => {
   try {
     const query = "SELECT * FROM users WHERE id = ?";
 
@@ -250,6 +250,44 @@ const setPassword = async (email , password) => {
 };
 
 
+const setProfileImage = async (id, profile) => {
+  try {
+    const query = `UPDATE users SET avator = ? WHERE id = ?`;
+    const [result] = await db.query(query, [profile, id]);
+
+    if (result.affectedRows === 0) {
+      return {
+        success: false,
+        message: "User not found or profile unset",
+      };
+    }
+
+    return { success: true, message: "profile set successfully :)" };
+  } catch (error) {
+    throw new Error("Database error: " + error.message);
+  }
+};
+
+
+const removeProfile = async (id) => {
+  try {
+    const query = `UPDATE users SET avator = NULL WHERE id = ?`;
+    const [result] = await db.query(query, [id]);
+
+    if (result.affectedRows === 0) {
+      return {
+        success: false,
+        message: "User not found or profile not remove",
+      };
+    }
+
+    return { success: true, message: "Removed profile successfully :)" };
+  } catch (error) {
+    throw new Error("Database error: " + error.message);
+  }
+};
+
+
 module.exports = {
   createUser,
   findById,
@@ -264,4 +302,6 @@ module.exports = {
   setXProfile,
   setLinkedinProfile,
   setUsername,
+  setProfileImage,
+  removeProfile,
 };

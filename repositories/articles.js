@@ -6,25 +6,24 @@ const createArticle = async ({
   content,
   slug,
   author_id,
-  meta_title,
-  meta_description,
   cover,
+  summary,
 }) => {
   try {
     const insertedArticleQuery = `
-    INSERT INTO articles (title, content, slug, author_id, meta_title, meta_description , cover)
-    VALUES (?, ?, ?, ?, ?, ? , ?)
+    INSERT INTO articles (title, content, slug, author_id, cover , summary)
+    VALUES (?, ?, ?, ?, ?, ?)
   `;
 
-    const [insertedArticle] = await db.query(insertedArticleQuery, [
-      title,
-      content,
-      slug,
-      author_id,
-      meta_title,
-      meta_description,
-      cover,
-    ]);
+  const [insertedArticle] = await db.query(insertedArticleQuery, [
+    title,
+    content,
+    slug,
+    author_id,
+    cover,
+    summary,
+  ]);
+
     const selectInsertedArticleQuery = "SELECT * FROM articles WHERE id = ?";
     const [article] = await db.query(selectInsertedArticleQuery, [
       insertedArticle.insertId,
@@ -32,6 +31,8 @@ const createArticle = async ({
 
     return article[0];
   } catch (error) {
+    console.error("DB Error:", error);
+
     if (error.code === "ER_DUP_ENTRY") {
       let field = "value";
 
@@ -68,6 +69,23 @@ const removeArticle = async (articleId) => {
     const [article] = await db.query(query, [articleId]);
     return article.affectedRows > 0;
   } catch (error) {
+    console.error("DB Error:", error);
+    throw error;
+  }
+};
+
+const getArticleInfoById = async (id) => {
+  try {
+    const query = `SELECT articles.id , articles.title , articles.content , articles.slug , articles.created_at , articles.updated_at , articles.cover , users.name AS "Author_Name" , users.username AS "Author_Username" , users.avator AS "Author_Profile" FROM articles
+    INNER JOIN users ON users.id = articles.author_id
+    WHERE articles.id = ?`;
+
+    const [article] = await db.query(query, [id]);
+
+    return mapArticlesWithTagsAndAuthor(article);
+  } catch (error) {
+    console.error("DB Error:", error);
+
     throw error;
   }
 };
@@ -235,6 +253,7 @@ module.exports = {
   getAllArticles,
   getArticlesOfAuthor,
   getArticleInfoBySlug,
+  getArticleInfoById,
   editArticle,
   getPublishedArticlesOfAuthor,
   getDraftedArticlesOfAuthor,
